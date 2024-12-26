@@ -21,8 +21,8 @@ impl Mstatus {
   }
 
   // Before switching to S-mode, we'll set the MPP bits to 01. If any trap occurs in S-mode, and we
-  // fallback to M-mode using the MRET instruction, then in M-mode, we'll read the MPP bits and
-  // know that we fell back from S-mode.
+  // fallback to M-mode, then in M-mode, we'll read the MPP bits and know that we fell back from
+  // S-mode.
   #[inline]
   pub unsafe fn setMppBitsToSMode(&self) {
     self.clearMppBits();

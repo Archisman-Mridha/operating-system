@@ -65,10 +65,14 @@ unsafe fn start() -> ! {
   );
 
   // Store the hardware-thread id in the tp (thread pointer) register.
+  // TODO : Why do we need the tp register, if we already have the mhartid register?
   let hartId = Mhartid.read();
   Tp.write(hartId);
 
-  // Switch to S-mode and jump to main( ).
+  // An MRET instruction is used to return from a trap in M-mode.
+  // We return to S-mode (stored in MPP bits of the mstatus register) and start execution from
+  // main( ) (whose address is stored in the mepc register).
+  // REFER : section 3.1.6.1 in privileged ISA manual.
   asm!("mret");
 
   #[allow(clippy::empty_loop)]
