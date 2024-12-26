@@ -9,8 +9,4 @@ pkgs.mkShell {
 		qemu
 		/* TODO : Add riscv64-elf-gdb. */
 	];
-
-	shellHook = ''
-    rustup target add riscv64gc-unknown-none-elf
-  '';
 }

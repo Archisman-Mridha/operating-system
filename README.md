@@ -6,6 +6,8 @@
 
 - [Writing an OS in Rust](https://os.phil-opp.com)
 
+- [The toolchain file](https://rust-lang.github.io/rustup/overrides.html#the-toolchain-file)
+
 - [Everything You Never Wanted To Know About Linker Script](https://mcyoung.xyz/2021/06/01/linker-script/)
 
 - [Back to Basics: Compiling and Linking - Ben Saks - CppCon 2021](https://www.youtube.com/watch?v=cpkDQaYttR4)
