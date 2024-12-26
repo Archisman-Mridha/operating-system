@@ -29,11 +29,13 @@ core::arch::global_asm!(include_str!("asm/entry.S"));
              // with the name start. Without the attribute, the compiler would generate some
              // cryptic symbol to give every function a unique name.
 unsafe fn start() -> ! {
-  use core::arch::asm;
-  use main::main;
-  use registers::{
-    medeleg::Medeleg, mepc::Mepc, mhartid::Mhartid, mideleg::Mideleg, mstatus::Mstatus, satp::Satp,
-    sie::Sie, tp::Tp,
+  use {
+    core::arch::asm,
+    main::main,
+    registers::{
+      medeleg::Medeleg, mepc::Mepc, mhartid::Mhartid, mideleg::Mideleg, mstatus::Mstatus,
+      satp::Satp, sie::Sie, tp::Tp,
+    },
   };
 
   println!("Kernel is starting....");
