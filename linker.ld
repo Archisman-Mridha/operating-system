@@ -36,7 +36,7 @@ MEMORY {
   /* REFER : https://github.com/qemu/qemu/blob/master/hw/riscv/virt.c#L70 */
   CLINT (r)  : ORIGIN = 0x02000000, LENGTH = 0x00010000
   UART (rw)  : ORIGIN = 0x10000000, LENGTH = 0x00001000
-  DRAM (rwx) : ORIGIN = 0x80000000, LENGTH = 0x06400000
+  DRAM (rwx) : ORIGIN = 0x80000000, LENGTH = 0x10000000 /* (256 MB) */
 }
 
 /* Defining how to map input sections to output sections and how those output sections will be placed
@@ -48,7 +48,7 @@ SECTIONS {
   .text : ALIGN(4K) {
     *(.init .init*);
     *(.text .text*);
-  } > DRAM
+  } > DRAM /* Means : The section should be placed inside the DRAM memory region. */
 
   /*
     Contains static constants.
@@ -88,4 +88,8 @@ SECTIONS {
     *(.sbss .sbss*);
     *(.bss .bss*);
   } > DRAM
+
+	/* The memory address, where the loaded Kernel code ends, is stored in the kernelEndAddress
+		 variable. */
+	PROVIDE(_kernelEndAddress = .);
 }

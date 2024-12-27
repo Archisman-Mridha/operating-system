@@ -18,3 +18,4 @@ panic = "abort"
 panic = "abort"
 
 [dependencies]
+bit_field = "0.10.2"

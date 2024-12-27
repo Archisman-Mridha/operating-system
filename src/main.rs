@@ -1,6 +1,9 @@
-use crate::println;
+use crate::{allocator::GLOBAL_ALLOCATOR, println};
 
 #[no_mangle]
-pub extern "C" fn main() {
-  println!("Switched to Supervisor mode and jumped to main");
+pub unsafe extern "C" fn main() {
+  println!("DEBUG : Switched to Supervisor mode and jumped to main");
+
+  // Initialize the physical memory allocator.
+  GLOBAL_ALLOCATOR.init();
 }

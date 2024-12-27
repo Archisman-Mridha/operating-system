@@ -38,9 +38,7 @@ unsafe fn start() -> ! {
     },
   };
 
-  println!("Kernel is starting....");
-
-  println!("Preparing to switch from Machine to Supervisor mode....");
+  println!("INFO : Kernel is starting....");
 
   Mstatus.setMppBitsToSMode();
 
@@ -85,11 +83,16 @@ mod main;
 mod modes;
 mod registers;
 
+extern crate alloc;
+mod allocator;
+
 // The panic_handler attribute defines the function that the compiler should invoke when a panic
 // occurs. The standard library provides its own panic handler function, but in a no_std environment
 // we need to define it ourselves.
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
+  // TODO : Print the panic message.
+  println!("ERROR : Kernel panic occurred!");
   loop {}
 }
 
@@ -99,4 +102,4 @@ fn panic(_info: &core::panic::PanicInfo) -> ! {
 // panic. This ensures that all used memory is freed and allows the parent thread to catch the
 // panic and continue execution.
 // Unwinding, however, is a complicated process and requires some OS-specific libraries (e.g.
-// libunwind on Linux), so we'll disable it.
+// libunwind on Linux), so we'll disable it, by setting panic = "abort" in Cargo.toml.
