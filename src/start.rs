@@ -1,6 +1,7 @@
 #![allow(non_snake_case)]
 #![allow(special_module_name)]
 #![allow(clippy::upper_case_acronyms)]
+#![feature(slice_ptr_get)]
 //
 // Rust's standard library depends on libc, which in-turn depends on the underlying Operating
 // System. Since we're building the Operating System itself, we cannot use the standard library.

@@ -30,6 +30,8 @@
 
 - [The toolchain file](https://rust-lang.github.io/rustup/overrides.html#the-toolchain-file)
 
+- [Pointer types](https://doc.rust-lang.org/reference/types/pointer.html) | [Raw Pointers](https://web.mit.edu/rust-lang_v1.25/arch/amd64_ubuntu1404/share/doc/rust/html/book/first-edition/raw-pointers.html)
+
 - [Crust of Rust: Atomics and Memory Ordering](https://youtu.be/rMGWeSjctlY?si=xfBF8NWo3NDxZ3OC)
 
 - [The macro_use attribute](https://doc.rust-lang.org/reference/macros-by-example.html#the-macro_use-attribute)

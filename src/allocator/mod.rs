@@ -1,6 +1,7 @@
 #[allow(clippy::module_inception)]
 mod allocator;
 mod buddy;
+mod list;
 mod utils;
 
 use allocator::ArnoAllocator;

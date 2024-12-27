@@ -1,9 +1,15 @@
 use {
-  crate::allocator::utils,
-  core::{alloc::Layout, cmp::max, ptr},
+  super::list::FreeList,
+  crate::allocator::utils::{self, ceilToMultiple, initSliceWith0s},
+  core::{alloc::Layout, cmp::max, mem::MaybeUninit, ptr},
 };
 
-// REFER : https://youtu.be/DRAHRJEAEso.
+/*
+  NOTE : We're using raw pointers for slices everywhere, to disable bound checks while accessing
+         slice elements. This results to a faster performance.
+
+  REFER : https://youtu.be/DRAHRJEAEso and ./BuddyAllocationAlgorithm.pdf.
+*/
 pub struct BuddyAllocator {
   isInitialized: bool,
 
@@ -13,9 +19,11 @@ pub struct BuddyAllocator {
   leafSize: usize, // Smallest chunk size.
   maxAlignmentSize: usize,
 
-  // Order (element count) of the set S, containing all possible chunk sizes.
-  // Refer to the derivation provided in ./BuddyAllocationAlgorithm.pdf.
-  possibleChunkSizesCount: usize,
+  // Number of possible chunk sizes / chunk classes (C_rs) we can have in the given effective memory
+  // region.
+  // Represented by the set S in the PDF document.
+  chunkClassesCount: usize,
+  chunkClasses: MaybeUninit<*mut [ChunkClass]>,
 }
 
 impl BuddyAllocator {
@@ -29,7 +37,8 @@ impl BuddyAllocator {
       leafSize: 0,
       maxAlignmentSize: 0,
 
-      possibleChunkSizesCount: 0,
+      chunkClassesCount: 0,
+      chunkClasses: MaybeUninit::uninit(),
     }
   }
 
@@ -62,34 +71,74 @@ impl BuddyAllocator {
 
     println!("DEBUG : Initializing Buddy allocator");
 
+    let mut pointer = utils::ceilToMultiple(memoryRegionStarting, max(leafSize, maxAlignmentSize));
+
     // Determine the effective memory region.
+    // This is represented by M' in the PDF document.
     {
-      self.effectiveMemoryRegionStarting =
-        utils::ceilToMultiple(memoryRegionStarting, max(leafSize, maxAlignmentSize));
+      self.effectiveMemoryRegionStarting = pointer;
 
       self.effectiveMemoryRegionEnding =
-        utils::ceilToMultiple(memoryRegionEnding, max(leafSize, maxAlignmentSize));
+        utils::floorToMultiple(memoryRegionEnding, max(leafSize, maxAlignmentSize));
 
       println!(
         "DEBUG : Effective memory region : {} - {}",
-        self.effectiveMemoryRegionStarting, self.effectiveMemoryRegionEnding
+        self.effectiveMemoryRegionStarting, self.effectiveMemoryRegionEnding,
       );
     }
+
+    let effectiveMemoryRegionSize =
+      self.effectiveMemoryRegionEnding - self.effectiveMemoryRegionStarting;
 
     self.leafSize = leafSize;
     self.maxAlignmentSize = maxAlignmentSize;
 
-    // Refer to the derivation provided in ./BuddyAllocationAlgorithm.pdf.
-    let effectiveMemoryRegionSize =
-      self.effectiveMemoryRegionEnding - self.effectiveMemoryRegionStarting;
-    self.possibleChunkSizesCount =
-      (usize::ilog2(effectiveMemoryRegionSize / leafSize) + 1) as usize;
+    self.chunkClassesCount = (usize::ilog2(effectiveMemoryRegionSize / leafSize) + 1) as usize;
 
-    for possibleChunkSize in 0..self.possibleChunkSizesCount {}
+    // Initialize self.chunkClasses with 0s.
+    let chunkClasses = initSliceWith0s::<ChunkClass>(&mut pointer, self.chunkClassesCount);
+    self.chunkClasses.as_mut_ptr().write(chunkClasses);
+
+    // For each possible chunk size, initialize the BitMaps BM and sBM, in the corresponding chunk
+    // class C_r.
+    for k_r in 0..self.chunkClassesCount {
+      let chunkClassSize = self.getChunkClassSize(k_r);
+      let chunkClass = self.getChunkClass(k_r);
+
+      let bitMapByteSize = ceilToMultiple(chunkClassSize, 8) / 8;
+
+      // TODO : initialize chunkClass.freeList.
+
+      // Initialize BM.
+      let bm = initSliceWith0s::<u8>(&mut pointer, bitMapByteSize);
+      chunkClass.bm.as_mut_ptr().write(bm);
+
+      // Initialize sBM.
+      {
+        // The leaf chunks cannot be split further. So, we'll not create an sBM for the chunk class
+        // containining leaf chunks.
+        if k_r == 0 {
+          continue;
+        }
+
+        let sBM = initSliceWith0s::<u8>(&mut pointer, bitMapByteSize);
+        chunkClass.sBM.as_mut_ptr().write(sBM);
+      }
+    }
+
+    unimplemented!();
 
     self.isInitialized = true;
   }
 
+  fn initFreeRegions(&mut self, pointer: usize) {
+    let k_max = self.chunkClassesCount - 1;
+
+    for k_r in 0..k_max {}
+  }
+}
+
+impl BuddyAllocator {
   pub fn alloc(&mut self, layout: Layout) -> *mut u8 {
     // CASE : Allocating zero sized types.
     if layout.size() == 0 {
@@ -102,5 +151,58 @@ impl BuddyAllocator {
     );
 
     unimplemented!()
+  }
+}
+
+// Holds information about all possible chunks having the same size (say r).
+// Represented by the set C_r in the PDF document.
+#[repr(C)]
+struct ChunkClass {
+  freeList: FreeList,
+
+  // Represented by the BitMap BM_r in the PDF document.
+  // The ith bit indicates whether the ith possible chunk in C_r has been allocated or not.
+  bm: MaybeUninit<*mut [u8]>,
+
+  // Represented by the BitMap sBM_r in the PDF document.
+  // The ith bit indicates whether the ith possible chunk in C_r has been split or not.
+  sBM: MaybeUninit<*mut [u8]>,
+}
+
+impl BuddyAllocator {
+  // Returns the chunk C_r corresponding the given k_r.
+  //
+  // SAFETY : Self.init( ) must have been invoked before.
+  unsafe fn getChunkClass(&mut self, k_r: usize) -> &mut ChunkClass {
+    let chunkClasses = *self.chunkClasses.as_ptr();
+    chunkClasses.get_unchecked_mut(k_r).as_mut().unwrap()
+  }
+
+  // Returns size of the chunk class C_r corresponding to the given k_r.
+  // The size of the chunk class C_r represents the maximum possible count of chunks (with the given
+  // size) we can have in the effective memory region.
+  // Represented by the formula (4) in the PDF document.
+  #[inline]
+  fn getChunkClassSize(&self, k_r: usize) -> usize {
+    1 << ((self.chunkClassesCount - 1) - k_r)
+  }
+
+  // Returns the size of a chunk belonging to the chunk class C_r corresponding to the given k_r.
+  // Derived from the equation after (3) in the PDF document.
+  fn getChunkSize(&self, k_r: usize) -> usize {
+    self.leafSize * (1 << k_r)
+  }
+
+  // Returns the memory address of the ith member chunk of the chunk class C_r corresponding to the
+  // given k_r.
+  // Represented by the formula (6) in the PDF document.
+  fn getChunkAddress(&self, k_r: usize, i: usize) -> usize {
+    self.effectiveMemoryRegionStarting + (i * self.getChunkSize(k_r))
+  }
+
+  // Returns index of the chunk with the given memory address, in the chunk class corresponding to
+  // the given k_r.
+  fn getChunkIndexInChunkClassFromAddress(&self, address: usize, k_r: usize) -> usize {
+    (address - self.effectiveMemoryRegionStarting) / self.getChunkSize(k_r)
   }
 }
