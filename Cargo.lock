@@ -6,8 +6,15 @@ version = 4
 name = "arno"
 version = "0.1.0"
 dependencies = [
+ "array-macro",
  "bit_field",
 ]
+
+[[package]]
+name = "array-macro"
+version = "2.1.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "220a2c618ab466efe41d0eace94dfeff1c35e3aa47891bdb95e1c0fefffd3c99"
 
 [[package]]
 name = "bit_field"

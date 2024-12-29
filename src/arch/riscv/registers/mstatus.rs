@@ -11,9 +11,8 @@ enum BitMasks {
 // REFER : section 3.1.6 in privileged ISA manual.
 pub struct Mstatus;
 
+// xPP (x = current privilege mode) bits represent the privilege mode prior to the trap.
 impl Mstatus {
-  // NOTE : xPP (x = current privilege mode) bits represent the privilege mode prior to the trap.
-
   // Clears the MPP bits.
   #[inline]
   unsafe fn clearMppBits(&self) {

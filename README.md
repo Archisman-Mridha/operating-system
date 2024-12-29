@@ -1,6 +1,6 @@
 # Arno
 
-## TODOs
+## Todos
 
 - [ ] Explain how memory-mapping registers work.
 
@@ -10,15 +10,23 @@
 
 - [ ] Learn in-depth about [constant evaluation](https://doc.rust-lang.org/reference/const_eval.html#const-context).
 
+- [ ] Understand what are `pulse interrupts` (edge triggered).
+
+- [ ] Understand what the `array_macro` crate does, such that we can initialize an array even if the elements don't have the `Copy` trait implemented.
+
+- [x] Read about `atomics` and `memory ordering` in detail.
+
+- [ ] Read : https://amjad.alsharafi.dev/en/posts/operating-system/spinlocks/ and https://www.reddit.com/r/rust/comments/18be8fg/blog_operating_systems_spinlocks/.
+
 ## Scope of improvements
 
 - [ ] Support the `multiboot` protocol.
 
 - [ ] Take a look at the [spinning_top](https://github.com/rust-osdev/spinning_top) SpinLock implementation.
 
-- [ ] Use a Slab allocator instead of the Buddy allocator.
+- [ ] Use a `Slab allocator` instead of the Buddy allocator.
 
-## REFERENCEs
+## References
 
 - [Writing an OS in Rust](https://os.phil-opp.com)
 
@@ -33,6 +41,8 @@
 - [Pointer types](https://doc.rust-lang.org/reference/types/pointer.html) | [Raw Pointers](https://web.mit.edu/rust-lang_v1.25/arch/amd64_ubuntu1404/share/doc/rust/html/book/first-edition/raw-pointers.html)
 
 - [Crust of Rust: Atomics and Memory Ordering](https://youtu.be/rMGWeSjctlY?si=xfBF8NWo3NDxZ3OC)
+
+- [Rust Atomics and Locks](https://marabos.nl/atomics/) | [Rust Atomics and Locks Book Club](https://youtube.com/playlist?list=PL8AZrEE2-qZkE3Va-PsMepuUFxALaJheW&si=fgLbAGTkggXgZ-JR)
 
 - [The macro_use attribute](https://doc.rust-lang.org/reference/macros-by-example.html#the-macro_use-attribute)
 
@@ -59,3 +69,9 @@
 - [Gallery of Processor Cache Effects](http://igoro.com/archive/gallery-of-processor-cache-effects/)
 
 - [Buddy Memory Allocation](https://www.kuniga.me/blog/2020/07/31/buddy-memory-allocation.html)
+
+- [RISC-V Platform-Level Interrupt Controller Specification](https://github.com/riscv/riscv-plic-spec/blob/master/riscv-plic.adoc#interrupt-targets-and-hart-contexts)
+
+- [Tuesday @ 0900 RISC V Interrupts Krste Asanović, UC Berkeley & SiFive Inc](https://youtu.be/iPbaG_wnNJY)
+
+- [Memory Model](https://www.youtube.com/watch?v=QkbWgCSAEoo)

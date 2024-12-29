@@ -1,6 +1,8 @@
 use {
-  super::list::FreeList,
-  crate::allocator::utils::{self, ceilToMultiple, initSliceWith0s},
+  super::{
+    list::FreeList,
+    utils::{self, ceilToMultiple, initSliceWith0s},
+  },
   core::{alloc::Layout, cmp::max, mem::MaybeUninit, ptr},
 };
 

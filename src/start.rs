@@ -1,5 +1,4 @@
 #![allow(non_snake_case)]
-#![allow(special_module_name)]
 #![allow(clippy::upper_case_acronyms)]
 #![feature(slice_ptr_get)]
 //
@@ -22,8 +21,6 @@
 */
 #![no_main]
 
-use registers::pmp;
-
 core::arch::global_asm!(include_str!("asm/entry.S"));
 
 #[no_mangle] // Disabling name mangling to ensure that the Rust compiler really outputs a function
@@ -31,12 +28,12 @@ core::arch::global_asm!(include_str!("asm/entry.S"));
              // cryptic symbol to give every function a unique name.
 unsafe fn start() -> ! {
   use {
-    core::arch::asm,
-    main::main,
-    registers::{
-      medeleg::Medeleg, mepc::Mepc, mhartid::Mhartid, mideleg::Mideleg, mstatus::Mstatus,
+    arch::riscv::registers::{
+      medeleg::Medeleg, mepc::Mepc, mhartid::Mhartid, mideleg::Mideleg, mstatus::Mstatus, pmp,
       satp::Satp, sie::Sie, tp::Tp,
     },
+    core::arch::asm,
+    main::main,
   };
 
   println!("INFO : Kernel is starting....");
@@ -78,14 +75,16 @@ unsafe fn start() -> ! {
   loop {}
 }
 
-#[macro_use]
-mod console;
-mod main;
-mod modes;
-mod registers;
-
 extern crate alloc;
-mod allocator;
+
+#[macro_use]
+mod drivers;
+
+mod arch;
+mod locks;
+mod main;
+mod memory;
+mod process;
 
 // The panic_handler attribute defines the function that the compiler should invoke when a panic
 // occurs. The standard library provides its own panic handler function, but in a no_std environment

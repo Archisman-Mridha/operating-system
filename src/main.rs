@@ -1,4 +1,4 @@
-use crate::{allocator::GLOBAL_ALLOCATOR, println};
+use crate::{memory::allocator::GLOBAL_ALLOCATOR, println};
 
 #[no_mangle]
 pub unsafe extern "C" fn main() {
