@@ -29,7 +29,10 @@ pub struct Core {
 
 impl Core {
   pub const fn new() -> Self {
-    Self { noff: 0, intena: 0 }
+    Self {
+      noff: 0,
+      intena: false,
+    }
   }
 
   /*

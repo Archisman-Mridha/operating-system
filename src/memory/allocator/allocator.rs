@@ -1,17 +1,17 @@
-use {super::buddy::BuddyAllocator, core::alloc::GlobalAlloc};
+use {super::buddy::BuddyAllocator, crate::locks::spinlock::SpinLock, core::alloc::GlobalAlloc};
 
 const DRAM_STARTING_ADDRESS: usize = 0x80000000;
 const DRAM_SIZE: usize = 256 * 1024 * 1024; // (256 MB).
 const DRAM_ENDING_ADDRESS: usize = DRAM_STARTING_ADDRESS + DRAM_SIZE;
 
 pub struct ArnoAllocator {
-  buddyAllocator: BuddyAllocator,
+  buddyAllocator: SpinLock<BuddyAllocator>,
 }
 
 impl ArnoAllocator {
   pub const fn new() -> Self {
     Self {
-      buddyAllocator: BuddyAllocator::new(),
+      buddyAllocator: SpinLock::new(BuddyAllocator::new()),
     }
   }
 
@@ -29,7 +29,7 @@ impl ArnoAllocator {
       kernelEndAddress
     );
 
-    self.buddyAllocator.init(
+    self.buddyAllocator.acquire().init(
       kernelEndAddress,
       DRAM_ENDING_ADDRESS,
       16,   // Leaf size = 16 bytes.
@@ -40,10 +40,10 @@ impl ArnoAllocator {
 
 unsafe impl GlobalAlloc for ArnoAllocator {
   unsafe fn alloc(&self, layout: core::alloc::Layout) -> *mut u8 {
-    unimplemented!()
+    self.buddyAllocator.acquire().alloc(layout)
   }
 
   unsafe fn dealloc(&self, ptr: *mut u8, layout: core::alloc::Layout) {
-    unimplemented!()
+    self.buddyAllocator.acquire().dealloc(ptr, layout);
   }
 }

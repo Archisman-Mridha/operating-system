@@ -1,5 +1,3 @@
-// REFER : https://github.com/Archisman-Mridha/crust-of-rust/blob/main/atomics-and-memory-ordering/src/main.rs.
-
 use {
   crate::{arch::riscv::registers::tp::Tp, process::core::Core},
   core::{
@@ -10,6 +8,14 @@ use {
   },
 };
 
+/*
+  A SpinLock is a lock that causes a thread trying to acquire it to simply wait in a loop (spin)
+  while repeatedly checking whether the lock is available.
+
+  All interrupts remain disabled between the period a CPU core acquires and releases a SpinLock.
+  This prevents context switching, thus saving CPU cycles and eliminating any deadlock situations.
+  REFER : https://youtu.be/gQdflOUZQvA?si=HPniduCxD15lDWuO.
+*/
 pub struct SpinLock<T> {
   // We're using UnsafeCell<T> for interior mutability.
   // An immutable reference to SpinLock<T> (which, at the same time, can be shared across multiple
@@ -87,6 +93,8 @@ impl<T> SpinLock<T> {
 
       (4) We have used the Ordering::Acquire memory ordering to establish the happens-before
           relationship.
+
+      REFER : https://youtu.be/rMGWeSjctlY?si=ySq7B0A2Ucp-r6WV.
     */
     while self
       .isAcquired
@@ -100,39 +108,13 @@ impl<T> SpinLock<T> {
 
     unsafe { self.ownerCPUCoreID.set(Tp.read() as isize) };
 
-    SpinLockGuard(&self)
-  }
-
-  pub fn release(&self) {
-    // Ensure that the current CPU core is already owning the SpinLock.
-    assert!(
-      self.isCurrentCPUCoreHolding(),
-      "Current CPU core isn't already holding this SpinLock"
-    );
-
-    self.ownerCPUCoreID.set(-1);
-
-    /*
-      Any CPU core trying to acquire the SpinLock right after this moment, must see all the memory
-      operations upto this store operation with Release memory ordering.
-      We are establishing a happens-before relationship between this store operation with Release
-      memory ordering and all the load operations (with Acquire memory ordering) occuring after
-      this in other threads.
-
-      Release memory ordering : When coupled with a store, all previous operations become ordered
-                                before any load of this value with Acquire (or stronger) ordering.
-                                In particular, all writes upto this one become visible to all
-                                threads that perform an Acquire (or stronger) load of this value.
-    */
-    self.isAcquired.store(false, Ordering::Release);
-
-    Core::exitInterruptsDisabledSection();
+    SpinLockGuard(self)
   }
 
   // Returns whether the CPU core of the invoker is already holding the SpinLock or not.
   pub fn isCurrentCPUCoreHolding(&self) -> bool {
-    return self.isAcquired.load(Ordering::Relaxed)
-      && (self.ownerCPUCoreID.get() == unsafe { Tp.read() as isize });
+    self.isAcquired.load(Ordering::Relaxed)
+      && (self.ownerCPUCoreID.get() == unsafe { Tp.read() as isize })
   }
 }
 
@@ -161,6 +143,34 @@ impl<T> DerefMut for SpinLockGuard<'_, T> {
 impl<T> Drop for SpinLockGuard<'_, T> {
   fn drop(&mut self) {
     self.0.release()
+  }
+}
+
+impl<T> SpinLock<T> {
+  fn release(&self) {
+    // Ensure that the current CPU core is already owning the SpinLock.
+    assert!(
+      self.isCurrentCPUCoreHolding(),
+      "Current CPU core isn't already holding this SpinLock"
+    );
+
+    self.ownerCPUCoreID.set(-1);
+
+    /*
+      Any CPU core trying to acquire the SpinLock right after this moment, must see all the memory
+      operations upto this store operation with Release memory ordering.
+      We are establishing a happens-before relationship between this store operation with Release
+      memory ordering and all the load operations (with Acquire memory ordering) occuring after
+      this in other threads.
+
+      Release memory ordering : When coupled with a store, all previous operations become ordered
+                                before any load of this value with Acquire (or stronger) ordering.
+                                In particular, all writes upto this one become visible to all
+                                threads that perform an Acquire (or stronger) load of this value.
+    */
+    self.isAcquired.store(false, Ordering::Release);
+
+    Core::exitInterruptsDisabledSection();
   }
 }
 

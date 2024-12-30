@@ -26,6 +26,8 @@
 
 - [ ] Use a `Slab allocator` instead of the Buddy allocator.
 
+- [ ] Support multi-threading.
+
 ## References
 
 - [Writing an OS in Rust](https://os.phil-opp.com)

@@ -1,6 +1,11 @@
-#![allow(non_snake_case)]
-#![allow(clippy::upper_case_acronyms)]
-#![feature(slice_ptr_get)]
+#![allow(
+  non_snake_case,
+  non_camel_case_types,
+  special_module_name,
+  clippy::module_inception,
+  clippy::upper_case_acronyms
+)]
+#![feature(slice_ptr_get, new_zeroed_alloc)]
 //
 // Rust's standard library depends on libc, which in-turn depends on the underlying Operating
 // System. Since we're building the Operating System itself, we cannot use the standard library.
@@ -42,7 +47,7 @@ unsafe fn start() -> ! {
 
   Mepc.set(main as usize);
 
-  Satp.disablePaging();
+  Satp.disableVirtualAddressTranslation();
 
   // Delegate traps (exceptions and interrupts) to the S-mode.
   Medeleg.delegateExceptionsToSMode();
@@ -81,6 +86,7 @@ extern crate alloc;
 mod drivers;
 
 mod arch;
+pub mod fs;
 mod locks;
 mod main;
 mod memory;

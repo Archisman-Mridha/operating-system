@@ -154,6 +154,10 @@ impl BuddyAllocator {
 
     unimplemented!()
   }
+
+  pub fn dealloc(&mut self, _ptr: *mut u8, _layout: Layout) -> *mut u8 {
+    unimplemented!()
+  }
 }
 
 // Holds information about all possible chunks having the same size (say r).
